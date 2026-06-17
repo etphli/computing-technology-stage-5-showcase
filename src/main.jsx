@@ -24,6 +24,7 @@ const units = [
     kicker: "Design for the real web",
     description:
       "Plan, design, build, style and publish interactive websites that work across screens.",
+    outcome: "Create a polished, responsive site that can be shared online.",
     topics: [
       "HTML",
       "CSS",
@@ -43,6 +44,7 @@ const units = [
     kicker: "Make play interactive",
     description:
       "Turn ideas into playable experiences with mechanics, levels, scoring and testing.",
+    outcome: "Prototype a playable game loop with clear goals, feedback and difficulty.",
     topics: [
       "Game design",
       "Player interaction",
@@ -62,6 +64,7 @@ const units = [
     kicker: "Code meets hardware",
     description:
       "Explore robotics, sensors and circuits to understand how smart systems move and react.",
+    outcome: "Build smart systems that sense, respond and automate real-world actions.",
     topics: [
       "Robotics",
       "Sensors",
@@ -81,6 +84,7 @@ const units = [
     kicker: "Solve problems with code",
     description:
       "Learn Python programming and design app ideas through debugging, logic and interface thinking.",
+    outcome: "Code useful app-style solutions with clear logic and better debugging habits.",
     topics: [
       "Python",
       "Variables",
@@ -298,44 +302,62 @@ function UnitPanel({ unit, index, scrollY }) {
     return () => window.removeEventListener("resize", updateMetrics);
   }, []);
 
-  const progress = Math.max(
-    -1,
-    Math.min(1, (scrollY - metrics.top + window.innerHeight * 0.65) / (metrics.height || 1))
-  );
+  const viewportHeight = typeof window === "undefined" ? 800 : window.innerHeight;
+  const travel = Math.max(1, metrics.height - viewportHeight);
+  const progress = Math.max(0, Math.min(1, (scrollY - metrics.top) / travel));
   const depth = progress - 0.5;
+  const direction = index % 2 === 0 ? 1 : -1;
+  const hold = Math.max(0, 1 - Math.abs(progress - 0.5) * 3.2);
 
   return (
     <article
-      className="unitPanel"
+      className={`unitPanel ${index % 2 === 1 ? "reverse" : ""}`}
       ref={ref}
       style={{
-        "--imageShift": `${depth * -72}px`,
-        "--copyShift": `${depth * 34}px`,
-        "--floatShift": `${depth * -96}px`,
+        "--imageShift": `${depth * -92}px`,
+        "--imageX": `${depth * 170 * direction}px`,
+        "--copyShift": `${depth * 42}px`,
+        "--copyX": `${depth * -118 * direction}px`,
+        "--floatShift": `${depth * -118}px`,
+        "--floatX": `${depth * 280 * direction}px`,
+        "--sparkX": `${depth * -360 * direction}px`,
+        "--holdGlow": hold.toFixed(3),
+        "--holdBlur": `${8 + hold * 34}px`,
+        "--holdOpacity": (0.35 + hold * 0.55).toFixed(3),
         "--panelIndex": index
       }}
     >
-      <div className="unitImageWrap">
-        <img src={unit.image} alt="" loading={index === 0 ? "eager" : "lazy"} />
-        <div className={`unitVisual ${unit.visual}`}>
-          <Icon size={28} />
-          <span>{unit.kicker}</span>
+      <div className="unitScene">
+        <div className="unitImageWrap">
+          <img src={unit.image} alt="" loading={index === 0 ? "eager" : "lazy"} />
+          <div className={`unitVisual ${unit.visual}`}>
+            <Icon size={28} />
+            <span>{unit.kicker}</span>
+          </div>
         </div>
-      </div>
-      <div className="unitCopy">
-        <span className="unitNumber">0{index + 1}</span>
-        <h3>{unit.title}</h3>
-        <p>{unit.description}</p>
-        <div className="topicList">
-          {unit.topics.map((topic) => (
-            <span key={topic}>{topic}</span>
-          ))}
+        <div className="unitCopy">
+          <span className="unitNumber">0{index + 1}</span>
+          <h3>{unit.title}</h3>
+          <p>{unit.description}</p>
+          <div className="unitOutcome">
+            <strong>You will build</strong>
+            <span>{unit.outcome}</span>
+          </div>
+          <div className="topicList">
+            {unit.topics.map((topic) => (
+              <span key={topic}>{topic}</span>
+            ))}
+          </div>
+          <div className="sceneHold">
+            <span />
+            <span>Focus moment</span>
+          </div>
         </div>
-      </div>
-      <div className="parallaxSparks" aria-hidden="true">
-        <span />
-        <span />
-        <span />
+        <div className="parallaxSparks" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
       </div>
     </article>
   );

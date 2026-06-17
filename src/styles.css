@@ -449,12 +449,17 @@ h3 {
 }
 
 .unitPanel {
+  position: relative;
+  min-height: 190svh;
+  isolation: isolate;
+}
+
+.unitScene {
   position: sticky;
   top: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(360px, 0.94fr);
+  grid-template-columns: minmax(0, 1.16fr) minmax(420px, 0.84fr);
   min-height: 100svh;
-  isolation: isolate;
   overflow: hidden;
   border: 0;
   border-top: 1px solid rgba(196, 147, 47, 0.18);
@@ -466,7 +471,19 @@ h3 {
   backdrop-filter: blur(18px);
 }
 
-.unitPanel::before {
+.unitPanel.reverse .unitScene {
+  grid-template-columns: minmax(420px, 0.84fr) minmax(0, 1.16fr);
+}
+
+.unitPanel.reverse .unitImageWrap {
+  order: 2;
+}
+
+.unitPanel.reverse .unitCopy {
+  order: 1;
+}
+
+.unitScene::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -483,6 +500,8 @@ h3 {
   min-height: 100svh;
   overflow: hidden;
   background: #f7f0dc;
+  transform: translate3d(var(--imageX), 0, 0);
+  transition: transform 80ms linear;
 }
 
 .unitImageWrap img {
@@ -491,7 +510,7 @@ h3 {
   object-fit: cover;
   display: block;
   filter: saturate(0.92) contrast(1.05);
-  transform: scale(1.16) translate3d(0, var(--imageShift), 0);
+  transform: scale(1.24) translate3d(calc(var(--imageX) * -0.24), var(--imageShift), 0);
   transition: transform 80ms linear;
 }
 
@@ -521,7 +540,7 @@ h3 {
   box-shadow: 0 16px 40px rgba(50, 33, 0, 0.14);
   backdrop-filter: blur(16px);
   font-weight: 850;
-  transform: translate3d(0, var(--floatShift), 0);
+  transform: translate3d(calc(var(--floatX) * 0.24), var(--floatShift), 0);
   transition: transform 80ms linear;
 }
 
@@ -533,16 +552,20 @@ h3 {
 .unitCopy {
   position: relative;
   z-index: 2;
-  width: min(560px, calc(100% - 48px));
+  width: min(660px, calc(100% - 76px));
   margin: auto;
-  padding: 34px;
+  padding: clamp(34px, 5vw, 58px);
   border: 1px solid rgba(196, 147, 47, 0.24);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.74);
-  box-shadow: 0 30px 90px rgba(71, 50, 8, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 252, 242, 0.76)),
+    rgba(255, 255, 255, 0.74);
+  box-shadow:
+    0 30px 90px rgba(71, 50, 8, 0.14),
+    0 0 var(--holdBlur) rgba(196, 147, 47, 0.26);
   backdrop-filter: blur(20px);
   align-self: center;
-  transform: translate3d(0, var(--copyShift), 0);
+  transform: translate3d(var(--copyX), var(--copyShift), 0);
   transition: transform 80ms linear;
 }
 
@@ -561,8 +584,8 @@ h3 {
 .topicList {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 28px;
 }
 
 .topicList span {
@@ -573,6 +596,49 @@ h3 {
   color: #5b4615;
   font-size: 0.9rem;
   font-weight: 800;
+}
+
+.unitOutcome {
+  display: grid;
+  gap: 8px;
+  margin-top: 28px;
+  padding: 18px;
+  border: 1px solid rgba(196, 147, 47, 0.22);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(255, 246, 219, 0.92), rgba(255, 255, 255, 0.7));
+}
+
+.unitOutcome strong {
+  color: var(--gold-deep);
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.unitOutcome span {
+  color: #332d22;
+  font-weight: 760;
+  line-height: 1.48;
+}
+
+.sceneHold {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 30px;
+  color: #8d7330;
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.sceneHold span:first-child {
+  height: 3px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(196, 147, 47, 0.18), rgba(196, 147, 47, var(--holdOpacity)));
 }
 
 .parallaxSparks {
@@ -591,7 +657,8 @@ h3 {
   border: 1px solid rgba(196, 147, 47, 0.24);
   border-radius: 50%;
   opacity: 0.72;
-  transform: translate3d(0, calc(var(--floatShift) * 0.55), 0);
+  transform: translate3d(var(--sparkX), calc(var(--floatShift) * 0.55), 0);
+  transition: transform 80ms linear;
 }
 
 .parallaxSparks span:nth-child(1) {
@@ -924,7 +991,8 @@ h3 {
     opacity: 0.42;
   }
 
-  .unitPanel {
+  .unitScene,
+  .unitPanel.reverse .unitScene {
     grid-template-columns: minmax(0, 0.92fr) minmax(330px, 1.08fr);
   }
 
@@ -962,8 +1030,20 @@ h3 {
   .unitPanel:nth-child(n) {
     position: relative;
     top: auto;
+    min-height: 0;
+  }
+
+  .unitScene,
+  .unitPanel.reverse .unitScene {
+    position: relative;
+    top: auto;
     grid-template-columns: 1fr;
     min-height: 0;
+  }
+
+  .unitPanel.reverse .unitImageWrap,
+  .unitPanel.reverse .unitCopy {
+    order: initial;
   }
 
   .unitImageWrap {
@@ -971,6 +1051,7 @@ h3 {
   }
 
   .unitImageWrap img,
+  .unitImageWrap,
   .unitVisual,
   .unitCopy,
   .parallaxSparks span {
