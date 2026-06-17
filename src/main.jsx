@@ -122,6 +122,37 @@ const projects = [
   }
 ];
 
+async function requestCourseBot(message) {
+  const endpoints = ["/api/chat"];
+  const productionLocalEndpoint = "http://localhost:4173/api/chat";
+
+  if (window.location.origin !== "http://localhost:4173") {
+    endpoints.push(productionLocalEndpoint);
+  }
+
+  let lastError;
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || `Course bot request failed with ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError;
+}
+
 function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -401,12 +432,7 @@ function Chatbot({ open, onClose }) {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
-      });
-      const data = await response.json();
+      const data = await requestCourseBot(text);
       setMessages((current) => [
         ...current,
         {

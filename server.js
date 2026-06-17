@@ -55,6 +55,20 @@ The subject suits students who enjoy creating, problem solving, experimenting, d
 It connects to future pathways in software development, web design, cybersecurity, robotics, data, game design, engineering, product design, and many technology-rich careers.
 `;
 
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  }
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
 app.use(express.json({ limit: "1mb" }));
 
 function postDeepSeekChat(payload) {
