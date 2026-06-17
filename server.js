@@ -1,5 +1,6 @@
 import express from "express";
 import fs from "node:fs";
+import https from "node:https";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -41,6 +42,7 @@ loadLocalEnv();
 
 const app = express();
 const port = process.env.PORT || 4173;
+const allowSelfSignedCert = process.env.DEEPSEEK_ALLOW_SELF_SIGNED_CERT === "true";
 
 const courseContext = `
 Computing Technology Stage 5 is a Year 9 and Year 10 elective for students who want to design, code, build, test and improve real digital technologies.
@@ -54,6 +56,48 @@ It connects to future pathways in software development, web design, cybersecurit
 `;
 
 app.use(express.json({ limit: "1mb" }));
+
+function postDeepSeekChat(payload) {
+  const body = JSON.stringify(payload);
+  const agent = allowSelfSignedCert
+    ? new https.Agent({ rejectUnauthorized: false })
+    : undefined;
+
+  return new Promise((resolve, reject) => {
+    const request = https.request(
+      {
+        method: "POST",
+        hostname: "api.deepseek.com",
+        path: "/chat/completions",
+        agent,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(body),
+          Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        }
+      },
+      (response) => {
+        let responseBody = "";
+
+        response.setEncoding("utf8");
+        response.on("data", (chunk) => {
+          responseBody += chunk;
+        });
+        response.on("end", () => {
+          resolve({
+            ok: response.statusCode >= 200 && response.statusCode < 300,
+            status: response.statusCode,
+            text: responseBody
+          });
+        });
+      }
+    );
+
+    request.on("error", reject);
+    request.write(body);
+    request.end();
+  });
+}
 
 function fallbackAnswer(question = "") {
   const lower = question.toLowerCase();
@@ -90,13 +134,7 @@ app.post("/api/chat", async (req, res) => {
   }
 
   try {
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
+    const response = await postDeepSeekChat({
         model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
         temperature: 0.6,
         max_tokens: 420,
@@ -111,15 +149,13 @@ app.post("/api/chat", async (req, res) => {
             content: `Course context:\n${courseContext}\n\nStudent question: ${userMessage}`
           }
         ]
-      })
     });
 
     if (!response.ok) {
-      const detail = await response.text();
-      throw new Error(`DeepSeek API error ${response.status}: ${detail}`);
+      throw new Error(`DeepSeek API error ${response.status}: ${response.text}`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(response.text);
     const answer = data?.choices?.[0]?.message?.content?.trim();
 
     if (!answer) {
@@ -145,4 +181,5 @@ app.get("*", (_req, res) => {
 app.listen(port, () => {
   console.log(`Computing Technology Stage 5 site running on http://localhost:${port}`);
   console.log(`DeepSeek API key loaded: ${process.env.DEEPSEEK_API_KEY ? "yes" : "no"}`);
+  console.log(`DeepSeek self-signed certificate workaround: ${allowSelfSignedCert ? "on" : "off"}`);
 });
