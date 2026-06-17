@@ -125,8 +125,9 @@ const projects = [
 async function requestCourseBot(message) {
   const endpoints = ["/api/chat"];
   const productionLocalEndpoint = "http://localhost:4173/api/chat";
+  const localHostnames = ["localhost", "127.0.0.1"];
 
-  if (window.location.origin !== "http://localhost:4173") {
+  if (localHostnames.includes(window.location.hostname) && window.location.origin !== "http://localhost:4173") {
     endpoints.push(productionLocalEndpoint);
   }
 
@@ -159,10 +160,34 @@ function App() {
 
   useEffect(() => {
     let frame = 0;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const touchOptimized = window.matchMedia("(pointer: coarse), (max-width: 1100px)");
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const setStaticParallax = () => {
+      document.documentElement.style.setProperty("--heroParallax", "0px");
+      document.querySelectorAll(".unitPanel").forEach((panel) => {
+        panel.style.setProperty("--imageShift", "0px");
+        panel.style.setProperty("--imageX", "0px");
+        panel.style.setProperty("--copyShift", "0px");
+        panel.style.setProperty("--copyX", "0px");
+        panel.style.setProperty("--floatShift", "0px");
+        panel.style.setProperty("--floatX", "0px");
+        panel.style.setProperty("--sparkX", "0px");
+        panel.style.setProperty("--holdGlow", "1");
+        panel.style.setProperty("--holdBlur", "14px");
+        panel.style.setProperty("--holdOpacity", "0.75");
+      });
+    };
+
     const updateParallax = () => {
       frame = 0;
+
+      if (reducedMotion.matches || touchOptimized.matches) {
+        setStaticParallax();
+        return;
+      }
+
       document.documentElement.style.setProperty("--heroParallax", `${window.scrollY * 0.08}px`);
 
       const viewportHeight = window.innerHeight || 800;
@@ -194,12 +219,26 @@ function App() {
     };
 
     requestUpdate();
-    window.addEventListener("scroll", requestUpdate, { passive: true });
+    const syncMode = () => {
+      if (reducedMotion.matches || touchOptimized.matches) {
+        window.removeEventListener("scroll", requestUpdate);
+        requestUpdate();
+      } else {
+        window.addEventListener("scroll", requestUpdate, { passive: true });
+        requestUpdate();
+      }
+    };
+
+    syncMode();
     window.addEventListener("resize", requestUpdate);
+    reducedMotion.addEventListener?.("change", syncMode);
+    touchOptimized.addEventListener?.("change", syncMode);
 
     return () => {
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
+      reducedMotion.removeEventListener?.("change", syncMode);
+      touchOptimized.removeEventListener?.("change", syncMode);
       if (frame) {
         window.cancelAnimationFrame(frame);
       }
@@ -407,6 +446,94 @@ function UnitPanel({ unit, index }) {
   );
 }
 
+function renderInlineMarkdown(text, keyPrefix) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={`${keyPrefix}-bold-${index}`}>{part.slice(2, -2)}</strong>;
+    }
+
+    return <React.Fragment key={`${keyPrefix}-text-${index}`}>{part}</React.Fragment>;
+  });
+}
+
+function MarkdownMessage({ text }) {
+  const blocks = [];
+  let paragraph = [];
+  let list = null;
+
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    const content = paragraph.join(" ").trim();
+    if (content) {
+      blocks.push({
+        type: "paragraph",
+        content
+      });
+    }
+    paragraph = [];
+  };
+
+  const flushList = () => {
+    if (!list) return;
+    blocks.push(list);
+    list = null;
+  };
+
+  text.split(/\r?\n/).forEach((rawLine) => {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      flushList();
+      return;
+    }
+
+    const bulletMatch = line.match(/^[-*]\s+(.+)$/);
+    const numberMatch = line.match(/^\d+\.\s+(.+)$/);
+
+    if (bulletMatch || numberMatch) {
+      flushParagraph();
+      const type = bulletMatch ? "ul" : "ol";
+      if (!list || list.type !== type) {
+        flushList();
+        list = { type, items: [] };
+      }
+      list.items.push(bulletMatch?.[1] || numberMatch[1]);
+      return;
+    }
+
+    flushList();
+    paragraph.push(line);
+  });
+
+  flushParagraph();
+  flushList();
+
+  return (
+    <div className="markdownMessage">
+      {blocks.map((block, blockIndex) => {
+        if (block.type === "paragraph") {
+          return (
+            <p key={`paragraph-${blockIndex}`}>
+              {renderInlineMarkdown(block.content, `paragraph-${blockIndex}`)}
+            </p>
+          );
+        }
+
+        const ListTag = block.type;
+        return (
+          <ListTag key={`list-${blockIndex}`}>
+            {block.items.map((item, itemIndex) => (
+              <li key={`item-${blockIndex}-${itemIndex}`}>
+                {renderInlineMarkdown(item, `item-${blockIndex}-${itemIndex}`)}
+              </li>
+            ))}
+          </ListTag>
+        );
+      })}
+    </div>
+  );
+}
+
 function Chatbot({ open, onClose }) {
   const [messages, setMessages] = useState([
     {
@@ -465,7 +592,7 @@ function Chatbot({ open, onClose }) {
       <div className="chatMessages">
         {messages.map((message, index) => (
           <div className={`message ${message.role}`} key={`${message.role}-${index}`}>
-            {message.text}
+            {message.role === "bot" ? <MarkdownMessage text={message.text} /> : message.text}
           </div>
         ))}
         {loading && <div className="message bot thinking">Thinking...</div>}

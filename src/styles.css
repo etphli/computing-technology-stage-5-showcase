@@ -889,6 +889,31 @@ h3 {
   border: 1px solid rgba(196, 147, 47, 0.2);
 }
 
+.markdownMessage {
+  display: grid;
+  gap: 10px;
+}
+
+.markdownMessage p,
+.markdownMessage ul,
+.markdownMessage ol {
+  margin: 0;
+}
+
+.markdownMessage ul,
+.markdownMessage ol {
+  padding-left: 1.2rem;
+}
+
+.markdownMessage li + li {
+  margin-top: 6px;
+}
+
+.markdownMessage strong {
+  color: #241904;
+  font-weight: 900;
+}
+
 .message.user {
   margin-left: auto;
   color: #241904;
@@ -963,6 +988,46 @@ h3 {
     animation-duration: 0.001ms !important;
     scroll-behavior: auto !important;
     transition-duration: 0.001ms !important;
+  }
+}
+
+@media (pointer: coarse), (max-width: 1100px) {
+  .heroBackdrop,
+  .unitImageWrap,
+  .unitImageWrap img,
+  .unitVisual,
+  .unitCopy,
+  .parallaxSparks span {
+    transform: none !important;
+    transition: none !important;
+    will-change: auto;
+  }
+
+  .unitPanel {
+    min-height: 135svh;
+  }
+
+  .unitScene {
+    background:
+      linear-gradient(120deg, rgba(255, 255, 255, 0.94), rgba(255, 249, 232, 0.86)),
+      #fff;
+  }
+
+  .unitImageWrap img {
+    filter: saturate(0.95) contrast(1.02);
+  }
+
+  .unitCopy,
+  .unitVisual {
+    backdrop-filter: none;
+  }
+
+  .unitCopy {
+    box-shadow: 0 18px 48px rgba(71, 50, 8, 0.12);
+  }
+
+  .parallaxSparks {
+    display: none;
   }
 }
 
