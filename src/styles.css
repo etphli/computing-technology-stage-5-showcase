@@ -170,7 +170,8 @@ a {
   position: absolute;
   inset: 0;
   z-index: -2;
-  transition: transform 100ms linear;
+  transform: translate3d(0, var(--heroParallax, 0), 0);
+  will-change: transform;
 }
 
 .heroBackdrop::before {
@@ -450,7 +451,7 @@ h3 {
 
 .unitPanel {
   position: relative;
-  min-height: 190svh;
+  min-height: 175svh;
   isolation: isolate;
 }
 
@@ -468,7 +469,6 @@ h3 {
     linear-gradient(120deg, rgba(255, 255, 255, 0.88), rgba(255, 248, 225, 0.72)),
     #fff;
   box-shadow: none;
-  backdrop-filter: blur(18px);
 }
 
 .unitPanel.reverse .unitScene {
@@ -501,7 +501,7 @@ h3 {
   overflow: hidden;
   background: #f7f0dc;
   transform: translate3d(var(--imageX), 0, 0);
-  transition: transform 80ms linear;
+  will-change: transform;
 }
 
 .unitImageWrap img {
@@ -510,8 +510,8 @@ h3 {
   object-fit: cover;
   display: block;
   filter: saturate(0.92) contrast(1.05);
-  transform: scale(1.24) translate3d(calc(var(--imageX) * -0.24), var(--imageShift), 0);
-  transition: transform 80ms linear;
+  transform: scale(1.18) translate3d(calc(var(--imageX) * -0.2), var(--imageShift), 0);
+  will-change: transform;
 }
 
 .unitImageWrap::after {
@@ -538,10 +538,10 @@ h3 {
   color: #241904;
   background: rgba(255, 255, 255, 0.72);
   box-shadow: 0 16px 40px rgba(50, 33, 0, 0.14);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(8px);
   font-weight: 850;
   transform: translate3d(calc(var(--floatX) * 0.24), var(--floatShift), 0);
-  transition: transform 80ms linear;
+  will-change: transform;
 }
 
 .unitVisual svg {
@@ -553,8 +553,11 @@ h3 {
   position: relative;
   z-index: 2;
   width: min(660px, calc(100% - 76px));
+  max-height: calc(100svh - 136px);
+  overflow: auto;
+  overscroll-behavior: contain;
   margin: auto;
-  padding: clamp(34px, 5vw, 58px);
+  padding: 42px;
   border: 1px solid rgba(196, 147, 47, 0.24);
   border-radius: var(--radius);
   background:
@@ -563,10 +566,12 @@ h3 {
   box-shadow:
     0 30px 90px rgba(71, 50, 8, 0.14),
     0 0 var(--holdBlur) rgba(196, 147, 47, 0.26);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(8px);
   align-self: center;
   transform: translate3d(var(--copyX), var(--copyShift), 0);
-  transition: transform 80ms linear;
+  will-change: transform;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(196, 147, 47, 0.42) transparent;
 }
 
 .unitNumber {
@@ -658,7 +663,7 @@ h3 {
   border-radius: 50%;
   opacity: 0.72;
   transform: translate3d(var(--sparkX), calc(var(--floatShift) * 0.55), 0);
-  transition: transform 80ms linear;
+  will-change: transform;
 }
 
 .parallaxSparks span:nth-child(1) {
@@ -997,8 +1002,32 @@ h3 {
   }
 
   .unitCopy {
-    width: min(460px, calc(100% - 34px));
-    padding: 28px;
+    width: min(500px, calc(100% - 28px));
+    max-height: calc(100svh - 118px);
+    padding: 24px;
+  }
+
+  .unitCopy h3 {
+    font-size: 2.25rem;
+  }
+
+  .unitOutcome {
+    margin-top: 18px;
+    padding: 14px;
+  }
+
+  .topicList {
+    gap: 7px;
+    margin-top: 18px;
+  }
+
+  .topicList span {
+    padding: 7px 9px;
+    font-size: 0.82rem;
+  }
+
+  .sceneHold {
+    margin-top: 18px;
   }
 }
 
@@ -1166,6 +1195,8 @@ h3 {
 
   .unitCopy {
     width: calc(100% - 32px);
+    max-height: none;
+    overflow: visible;
     margin: -34px auto 24px;
     padding: 24px;
   }

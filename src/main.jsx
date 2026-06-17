@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowRight,
@@ -125,21 +125,55 @@ const projects = [
 function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    let frame = 0;
 
-  const parallaxStyle = useMemo(
-    () => ({
-      transform: `translate3d(0, ${scrollY * 0.08}px, 0)`
-    }),
-    [scrollY]
-  );
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const updateParallax = () => {
+      frame = 0;
+      document.documentElement.style.setProperty("--heroParallax", `${window.scrollY * 0.08}px`);
+
+      const viewportHeight = window.innerHeight || 800;
+      document.querySelectorAll(".unitPanel").forEach((panel, index) => {
+        const rect = panel.getBoundingClientRect();
+        const travel = Math.max(1, rect.height - viewportHeight);
+        const progress = clamp(-rect.top / travel, 0, 1);
+        const depth = progress - 0.5;
+        const direction = index % 2 === 0 ? 1 : -1;
+        const hold = Math.max(0, 1 - Math.abs(progress - 0.5) * 3.2);
+
+        panel.style.setProperty("--imageShift", `${depth * -76}px`);
+        panel.style.setProperty("--imageX", `${depth * 130 * direction}px`);
+        panel.style.setProperty("--copyShift", `${depth * 32}px`);
+        panel.style.setProperty("--copyX", `${depth * -86 * direction}px`);
+        panel.style.setProperty("--floatShift", `${depth * -92}px`);
+        panel.style.setProperty("--floatX", `${depth * 190 * direction}px`);
+        panel.style.setProperty("--sparkX", `${depth * -240 * direction}px`);
+        panel.style.setProperty("--holdGlow", hold.toFixed(3));
+        panel.style.setProperty("--holdBlur", `${8 + hold * 24}px`);
+        panel.style.setProperty("--holdOpacity", (0.35 + hold * 0.55).toFixed(3));
+      });
+    };
+
+    const requestUpdate = () => {
+      if (!frame) {
+        frame = window.requestAnimationFrame(updateParallax);
+      }
+    };
+
+    requestUpdate();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+
+    return () => {
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+    };
+  }, []);
 
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -166,7 +200,7 @@ function App() {
 
       <main>
         <section id="home" className="hero">
-          <div className="heroBackdrop" style={parallaxStyle} aria-hidden="true">
+          <div className="heroBackdrop" aria-hidden="true">
             <div className="codePane">
               <span>const idea = "build";</span>
               <span>design.website()</span>
@@ -221,7 +255,7 @@ function App() {
 
           <div className="unitRail">
             {units.map((unit, index) => (
-              <UnitPanel key={unit.title} unit={unit} index={index} scrollY={scrollY} />
+              <UnitPanel key={unit.title} unit={unit} index={index} />
             ))}
           </div>
         </section>
@@ -286,44 +320,23 @@ function App() {
   );
 }
 
-function UnitPanel({ unit, index, scrollY }) {
+function UnitPanel({ unit, index }) {
   const Icon = unit.icon;
-  const ref = useRef(null);
-  const [metrics, setMetrics] = useState({ top: 0, height: 1 });
-
-  useEffect(() => {
-    const updateMetrics = () => {
-      if (!ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
-      setMetrics({ top: rect.top + window.scrollY, height: rect.height || 1 });
-    };
-    updateMetrics();
-    window.addEventListener("resize", updateMetrics);
-    return () => window.removeEventListener("resize", updateMetrics);
-  }, []);
-
-  const viewportHeight = typeof window === "undefined" ? 800 : window.innerHeight;
-  const travel = Math.max(1, metrics.height - viewportHeight);
-  const progress = Math.max(0, Math.min(1, (scrollY - metrics.top) / travel));
-  const depth = progress - 0.5;
-  const direction = index % 2 === 0 ? 1 : -1;
-  const hold = Math.max(0, 1 - Math.abs(progress - 0.5) * 3.2);
 
   return (
     <article
       className={`unitPanel ${index % 2 === 1 ? "reverse" : ""}`}
-      ref={ref}
       style={{
-        "--imageShift": `${depth * -92}px`,
-        "--imageX": `${depth * 170 * direction}px`,
-        "--copyShift": `${depth * 42}px`,
-        "--copyX": `${depth * -118 * direction}px`,
-        "--floatShift": `${depth * -118}px`,
-        "--floatX": `${depth * 280 * direction}px`,
-        "--sparkX": `${depth * -360 * direction}px`,
-        "--holdGlow": hold.toFixed(3),
-        "--holdBlur": `${8 + hold * 34}px`,
-        "--holdOpacity": (0.35 + hold * 0.55).toFixed(3),
+        "--imageShift": "38px",
+        "--imageX": `${index % 2 === 0 ? -65 : 65}px`,
+        "--copyShift": "-16px",
+        "--copyX": `${index % 2 === 0 ? 43 : -43}px`,
+        "--floatShift": "46px",
+        "--floatX": `${index % 2 === 0 ? -95 : 95}px`,
+        "--sparkX": `${index % 2 === 0 ? 120 : -120}px`,
+        "--holdGlow": "0",
+        "--holdBlur": "8px",
+        "--holdOpacity": "0.35",
         "--panelIndex": index
       }}
     >
