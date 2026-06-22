@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   ArrowRight,
   Bot,
@@ -466,90 +468,17 @@ function UnitPanel({ unit, index }) {
   );
 }
 
-function renderInlineMarkdown(text, keyPrefix) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={`${keyPrefix}-bold-${index}`}>{part.slice(2, -2)}</strong>;
-    }
-
-    return <React.Fragment key={`${keyPrefix}-text-${index}`}>{part}</React.Fragment>;
-  });
-}
-
 function MarkdownMessage({ text }) {
-  const blocks = [];
-  let paragraph = [];
-  let list = null;
-
-  const flushParagraph = () => {
-    if (!paragraph.length) return;
-    const content = paragraph.join(" ").trim();
-    if (content) {
-      blocks.push({
-        type: "paragraph",
-        content
-      });
-    }
-    paragraph = [];
-  };
-
-  const flushList = () => {
-    if (!list) return;
-    blocks.push(list);
-    list = null;
-  };
-
-  text.split(/\r?\n/).forEach((rawLine) => {
-    const line = rawLine.trim();
-    if (!line) {
-      flushParagraph();
-      flushList();
-      return;
-    }
-
-    const bulletMatch = line.match(/^[-*]\s+(.+)$/);
-    const numberMatch = line.match(/^\d+\.\s+(.+)$/);
-
-    if (bulletMatch || numberMatch) {
-      flushParagraph();
-      const type = bulletMatch ? "ul" : "ol";
-      if (!list || list.type !== type) {
-        flushList();
-        list = { type, items: [] };
-      }
-      list.items.push(bulletMatch?.[1] || numberMatch[1]);
-      return;
-    }
-
-    flushList();
-    paragraph.push(line);
-  });
-
-  flushParagraph();
-  flushList();
-
   return (
     <div className="markdownMessage">
-      {blocks.map((block, blockIndex) => {
-        if (block.type === "paragraph") {
-          return (
-            <p key={`paragraph-${blockIndex}`}>
-              {renderInlineMarkdown(block.content, `paragraph-${blockIndex}`)}
-            </p>
-          );
-        }
-
-        const ListTag = block.type;
-        return (
-          <ListTag key={`list-${blockIndex}`}>
-            {block.items.map((item, itemIndex) => (
-              <li key={`item-${blockIndex}-${itemIndex}`}>
-                {renderInlineMarkdown(item, `item-${blockIndex}-${itemIndex}`)}
-              </li>
-            ))}
-          </ListTag>
-        );
-      })}
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ children, ...props }) => <a {...props} target="_blank" rel="noreferrer">{children}</a>
+        }}
+      >
+        {text}
+      </ReactMarkdown>
     </div>
   );
 }

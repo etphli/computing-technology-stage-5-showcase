@@ -1,6 +1,7 @@
 import express from "express";
 import fs from "node:fs";
 import https from "node:https";
+import { courseBotInstructions, courseContext, fallbackAnswer } from "./lib/courseBot.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,17 +44,6 @@ loadLocalEnv();
 const app = express();
 const port = process.env.PORT || 4173;
 const allowSelfSignedCert = process.env.OPENROUTER_ALLOW_SELF_SIGNED_CERT === "true";
-
-const courseContext = `
-Computing Technology Stage 5 is a Year 9 and Year 10 elective for students who want to design, code, build, test and improve real digital technologies.
-Main units: Web Development, Game Development, Mechatronics, and Python and App Development.
-Web Development includes HTML, CSS, JavaScript basics, responsive design, user interface design, website structure, and publishing online.
-Game Development includes game design principles, player interaction, sprites and assets, game logic, scoring systems, levels, difficulty, testing, and improvement.
-Mechatronics includes robotics, sensors, motors, circuits, microcontrollers, inputs, outputs, and automated systems.
-Python and App Development includes Python programming, variables, conditions, loops, functions, app interfaces, problem solving, and debugging.
-The subject suits students who enjoy creating, problem solving, experimenting, designing, technology, games, websites, apps, robotics, or learning how digital systems work.
-It connects to future pathways in software development, web design, cybersecurity, robotics, data, game design, engineering, product design, and many technology-rich careers.
-`;
 
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {
@@ -118,26 +108,6 @@ function postOpenRouterChat(payload) {
   });
 }
 
-function fallbackAnswer(question = "") {
-  const lower = question.toLowerCase();
-  if (lower.includes("game")) {
-    return "In Game Development, you learn how games are planned and coded: player controls, sprites, scoring, levels, difficulty, testing, and improving the experience. It is a great fit if you like creative problem solving and interactive design.";
-  }
-  if (lower.includes("robot") || lower.includes("mechatronic") || lower.includes("sensor")) {
-    return "Mechatronics is where software meets hardware. You explore sensors, motors, circuits, microcontrollers, inputs and outputs, then use them to build smart automated systems.";
-  }
-  if (lower.includes("python") || lower.includes("app")) {
-    return "Python and App Development helps you learn programming step by step through variables, conditions, loops, functions, debugging, problem solving, and interface ideas for apps.";
-  }
-  if (lower.includes("web") || lower.includes("website")) {
-    return "Web Development is about designing and building interactive websites. You learn HTML, CSS, JavaScript basics, responsive design, user interface design, site structure, and how websites get published online.";
-  }
-  if (lower.includes("career") || lower.includes("future") || lower.includes("useful")) {
-    return "Computing Technology is useful because digital skills appear in almost every future field: software, design, business, engineering, science, media, robotics, cybersecurity, and game development. You practise thinking like a creator, not just a user.";
-  }
-  return "Computing Technology Stage 5 is a creative Year 9 and Year 10 elective where you design, code, build and improve real digital technologies. You explore websites, games, robotics-style mechatronics, Python and app development, so it suits students who like making things and solving problems.";
-}
-
 app.post("/api/chat", async (req, res) => {
   const userMessage = String(req.body?.message || "").trim().slice(0, 1200);
 
@@ -163,13 +133,12 @@ app.post("/api/chat", async (req, res) => {
       try {
         const response = await postOpenRouterChat({
         model,
-        temperature: 0.6,
-        max_tokens: 320,
+        temperature: 0.35,
+        max_tokens: 220,
         messages: [
           {
             role: "system",
-            content:
-              "You are a friendly course guide for Year 8 students choosing Year 9 electives. Answer only using the supplied Computing Technology Stage 5 course context. Be clear, encouraging, concise, and student-friendly. If a question is unrelated, gently bring it back to the course."
+            content: courseBotInstructions
           },
           {
             role: "user",

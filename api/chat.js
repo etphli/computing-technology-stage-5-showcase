@@ -1,32 +1,5 @@
 import https from "node:https";
-
-const courseContext = `
-Computing Technology Stage 5 is a Year 9 and Year 10 elective for students who want to design, code, build, test and improve real digital technologies.
-Main units: Web Development, Game Development, Mechatronics, and Python and App Development.
-Web Development includes HTML, CSS, JavaScript basics, responsive design, user interface design, website structure, and publishing online.
-Game Development includes game design principles, player interaction, sprites and assets, game logic, scoring systems, levels, difficulty, testing, and improvement.
-Mechatronics includes robotics, sensors, motors, circuits, microcontrollers, inputs, outputs, and automated systems.
-Python and App Development includes Python programming, variables, conditions, loops, functions, app interfaces, problem solving, and debugging.
-The subject suits students who enjoy creating, problem solving, experimenting, designing, technology, games, websites, apps, robotics, or learning how digital systems work.
-It connects to future pathways in software development, web design, cybersecurity, robotics, data, game design, engineering, product design, and many technology-rich careers.
-`;
-
-function fallbackAnswer(question = "") {
-  const lower = question.toLowerCase();
-  if (lower.includes("game")) {
-    return "In Game Development, you learn how games are planned and coded: player controls, sprites, scoring, levels, difficulty, testing, and improving the experience.";
-  }
-  if (lower.includes("robot") || lower.includes("mechatronic") || lower.includes("sensor")) {
-    return "Mechatronics is where software meets hardware. You explore sensors, motors, circuits, microcontrollers, inputs and outputs, then use them to build smart automated systems.";
-  }
-  if (lower.includes("python") || lower.includes("app")) {
-    return "Python and App Development helps you learn variables, conditions, loops, functions, debugging, problem solving, and app interface ideas.";
-  }
-  if (lower.includes("web") || lower.includes("website")) {
-    return "Web Development is about designing and building interactive websites using HTML, CSS, JavaScript basics, responsive design, user interface design, site structure, and publishing online.";
-  }
-  return "Computing Technology Stage 5 is a creative Year 9 and Year 10 elective where you design, code, build and improve websites, games, mechatronics systems, Python programs and app ideas.";
-}
+import { courseBotInstructions, courseContext, fallbackAnswer } from "../lib/courseBot.js";
 
 function postOpenRouterChat(payload) {
   const body = JSON.stringify(payload);
@@ -108,13 +81,12 @@ export default async function handler(req, res) {
       try {
         const response = await postOpenRouterChat({
       model,
-      temperature: 0.6,
-      max_tokens: 320,
+      temperature: 0.35,
+      max_tokens: 220,
       messages: [
         {
           role: "system",
-          content:
-            "You are a friendly course guide for Year 8 students choosing Year 9 electives. Answer only using the supplied Computing Technology Stage 5 course context. Be clear, encouraging, concise, and student-friendly."
+          content: courseBotInstructions
         },
         {
           role: "user",

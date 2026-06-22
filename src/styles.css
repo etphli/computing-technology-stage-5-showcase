@@ -983,8 +983,20 @@ h3 {
 
 .markdownMessage p,
 .markdownMessage ul,
-.markdownMessage ol {
+.markdownMessage ol,
+.markdownMessage h1,
+.markdownMessage h2,
+.markdownMessage h3,
+.markdownMessage blockquote,
+.markdownMessage pre {
   margin: 0;
+}
+
+.markdownMessage h1,
+.markdownMessage h2,
+.markdownMessage h3 {
+  font-size: 1rem;
+  line-height: 1.3;
 }
 
 .markdownMessage ul,
@@ -999,6 +1011,27 @@ h3 {
 .markdownMessage strong {
   color: #241904;
   font-weight: 900;
+}
+
+.markdownMessage a {
+  color: #805d0d;
+  font-weight: 750;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.markdownMessage code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #fff4d1;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.markdownMessage blockquote {
+  padding-left: 10px;
+  border-left: 3px solid #e5bd5d;
+  color: #695b43;
 }
 
 .message.user {
