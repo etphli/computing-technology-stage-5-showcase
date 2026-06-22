@@ -28,9 +28,9 @@ function fallbackAnswer(question = "") {
   return "Computing Technology Stage 5 is a creative Year 9 and Year 10 elective where you design, code, build and improve websites, games, mechatronics systems, Python programs and app ideas.";
 }
 
-function postDeepSeekChat(payload) {
+function postOpenRouterChat(payload) {
   const body = JSON.stringify(payload);
-  const allowSelfSignedCert = process.env.DEEPSEEK_ALLOW_SELF_SIGNED_CERT === "true";
+  const allowSelfSignedCert = process.env.OPENROUTER_ALLOW_SELF_SIGNED_CERT === "true";
   const agent = allowSelfSignedCert
     ? new https.Agent({ rejectUnauthorized: false })
     : undefined;
@@ -39,13 +39,15 @@ function postDeepSeekChat(payload) {
     const request = https.request(
       {
         method: "POST",
-        hostname: "api.deepseek.com",
-        path: "/chat/completions",
+        hostname: "openrouter.ai",
+        path: "/api/v1/chat/completions",
         agent,
         headers: {
           "Content-Type": "application/json",
           "Content-Length": Buffer.byteLength(body),
-          Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "HTTP-Referer": process.env.SITE_URL || "https://computing-technology-stage-5.vercel.app",
+          "X-Title": "Computing Technology Stage 5"
         }
       },
       (response) => {
@@ -88,13 +90,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Please enter a question." });
   }
 
-  if (!process.env.DEEPSEEK_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return res.json({ answer: fallbackAnswer(userMessage), demo: true });
   }
 
   try {
-    const response = await postDeepSeekChat({
-      model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+    const response = await postOpenRouterChat({
+      model: process.env.OPENROUTER_MODEL || "google/gemma-4-31b-it:free",
       temperature: 0.6,
       max_tokens: 420,
       messages: [
@@ -111,13 +113,13 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      throw new Error(`DeepSeek API error ${response.status}: ${response.text}`);
+      throw new Error(`OpenRouter API error ${response.status}: ${response.text}`);
     }
 
     const data = JSON.parse(response.text);
     const answer = data?.choices?.[0]?.message?.content?.trim();
     if (!answer) {
-      throw new Error("DeepSeek returned an empty response.");
+      throw new Error("OpenRouter returned an empty response.");
     }
 
     return res.json({ answer });

@@ -42,7 +42,7 @@ loadLocalEnv();
 
 const app = express();
 const port = process.env.PORT || 4173;
-const allowSelfSignedCert = process.env.DEEPSEEK_ALLOW_SELF_SIGNED_CERT === "true";
+const allowSelfSignedCert = process.env.OPENROUTER_ALLOW_SELF_SIGNED_CERT === "true";
 
 const courseContext = `
 Computing Technology Stage 5 is a Year 9 and Year 10 elective for students who want to design, code, build, test and improve real digital technologies.
@@ -71,7 +71,7 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: "1mb" }));
 
-function postDeepSeekChat(payload) {
+function postOpenRouterChat(payload) {
   const body = JSON.stringify(payload);
   const agent = allowSelfSignedCert
     ? new https.Agent({ rejectUnauthorized: false })
@@ -81,13 +81,15 @@ function postDeepSeekChat(payload) {
     const request = https.request(
       {
         method: "POST",
-        hostname: "api.deepseek.com",
-        path: "/chat/completions",
+        hostname: "openrouter.ai",
+        path: "/api/v1/chat/completions",
         agent,
         headers: {
           "Content-Type": "application/json",
           "Content-Length": Buffer.byteLength(body),
-          Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "HTTP-Referer": process.env.SITE_URL || "http://localhost:4173",
+          "X-Title": "Computing Technology Stage 5"
         }
       },
       (response) => {
@@ -140,7 +142,7 @@ app.post("/api/chat", async (req, res) => {
     return res.status(400).json({ error: "Please enter a question." });
   }
 
-  if (!process.env.DEEPSEEK_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return res.json({
       answer: fallbackAnswer(userMessage),
       demo: true
@@ -148,8 +150,8 @@ app.post("/api/chat", async (req, res) => {
   }
 
   try {
-    const response = await postDeepSeekChat({
-        model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+    const response = await postOpenRouterChat({
+        model: process.env.OPENROUTER_MODEL || "google/gemma-4-31b-it:free",
         temperature: 0.6,
         max_tokens: 420,
         messages: [
@@ -166,14 +168,14 @@ app.post("/api/chat", async (req, res) => {
     });
 
     if (!response.ok) {
-      throw new Error(`DeepSeek API error ${response.status}: ${response.text}`);
+      throw new Error(`OpenRouter API error ${response.status}: ${response.text}`);
     }
 
     const data = JSON.parse(response.text);
     const answer = data?.choices?.[0]?.message?.content?.trim();
 
     if (!answer) {
-      throw new Error("DeepSeek returned an empty response.");
+      throw new Error("OpenRouter returned an empty response.");
     }
 
     res.json({ answer });
@@ -194,6 +196,7 @@ app.get("*", (_req, res) => {
 
 app.listen(port, () => {
   console.log(`Computing Technology Stage 5 site running on http://localhost:${port}`);
-  console.log(`DeepSeek API key loaded: ${process.env.DEEPSEEK_API_KEY ? "yes" : "no"}`);
-  console.log(`DeepSeek self-signed certificate workaround: ${allowSelfSignedCert ? "on" : "off"}`);
+  console.log(`OpenRouter API key loaded: ${process.env.OPENROUTER_API_KEY ? "yes" : "no"}`);
+  console.log(`OpenRouter model: ${process.env.OPENROUTER_MODEL || "google/gemma-4-31b-it:free"}`);
+  console.log(`OpenRouter self-signed certificate workaround: ${allowSelfSignedCert ? "on" : "off"}`);
 });

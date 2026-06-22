@@ -234,11 +234,22 @@ function App() {
     reducedMotion.addEventListener?.("change", syncMode);
     touchOptimized.addEventListener?.("change", syncMode);
 
+    const chapterObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle("is-active", entry.isIntersecting);
+        });
+      },
+      { rootMargin: "-32% 0px -32% 0px", threshold: 0 }
+    );
+    document.querySelectorAll(".unitPanel").forEach((panel) => chapterObserver.observe(panel));
+
     return () => {
       window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
       reducedMotion.removeEventListener?.("change", syncMode);
       touchOptimized.removeEventListener?.("change", syncMode);
+      chapterObserver.disconnect();
       if (frame) {
         window.cancelAnimationFrame(frame);
       }
@@ -440,6 +451,15 @@ function UnitPanel({ unit, index }) {
           <span />
           <span />
           <span />
+        </div>
+        <div className="sceneChapter" aria-hidden="true">
+          <span className="sceneChapterNumber">0{index + 1}</span>
+          <div className="sceneChapterDots">
+            {units.map((_, dotIndex) => (
+              <span className={dotIndex === index ? "current" : ""} key={`chapter-${dotIndex}`} />
+            ))}
+          </div>
+          <small>Explore</small>
         </div>
       </div>
     </article>

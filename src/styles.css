@@ -471,6 +471,31 @@ h3 {
   box-shadow: none;
 }
 
+.unitScene::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  right: 0;
+  z-index: 3;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, var(--gold), transparent);
+  transform: scaleY(0.12);
+  opacity: 0.2;
+  transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 500ms ease;
+  transform-origin: center;
+}
+
+.unitPanel.reverse .unitScene::after {
+  right: auto;
+  left: 0;
+}
+
+.unitPanel.is-active .unitScene::after {
+  transform: scaleY(1);
+  opacity: 0.85;
+}
+
 .unitPanel.reverse .unitScene {
   grid-template-columns: minmax(420px, 0.84fr) minmax(0, 1.16fr);
 }
@@ -572,6 +597,12 @@ h3 {
   will-change: transform;
   scrollbar-width: thin;
   scrollbar-color: rgba(196, 147, 47, 0.42) transparent;
+  opacity: 0.68;
+  transition: opacity 320ms ease;
+}
+
+.unitPanel.is-active .unitCopy {
+  opacity: 1;
 }
 
 .unitNumber {
@@ -686,6 +717,62 @@ h3 {
   width: 5rem;
   height: 5rem;
   background: radial-gradient(circle, rgba(248, 213, 115, 0.36), transparent 64%);
+}
+
+.sceneChapter {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  z-index: 5;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  color: var(--gold-deep);
+  transform: translateY(-50%);
+}
+
+.unitPanel.reverse .sceneChapter {
+  right: auto;
+  left: 18px;
+}
+
+.sceneChapterNumber {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(196, 147, 47, 0.32);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 12px 32px rgba(71, 50, 8, 0.12);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.sceneChapterDots {
+  display: grid;
+  gap: 8px;
+}
+
+.sceneChapterDots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(154, 109, 20, 0.28);
+  transition: height 280ms ease, background 280ms ease;
+}
+
+.sceneChapterDots span.current {
+  height: 24px;
+  border-radius: 999px;
+  background: var(--gold);
+}
+
+.sceneChapter small {
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
 }
 
 .whySection {
@@ -996,7 +1083,6 @@ h3 {
   .unitImageWrap,
   .unitImageWrap img,
   .unitVisual,
-  .unitCopy,
   .parallaxSparks span {
     transform: none !important;
     transition: none !important;
@@ -1004,7 +1090,7 @@ h3 {
   }
 
   .unitPanel {
-    min-height: 135svh;
+    min-height: 160svh;
   }
 
   .unitScene {
@@ -1017,6 +1103,17 @@ h3 {
     filter: saturate(0.95) contrast(1.02);
   }
 
+  .unitImageWrap {
+    opacity: 0.62;
+    clip-path: inset(7% 10% 7% 10% round 8px);
+    transition: opacity 650ms ease, clip-path 850ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  }
+
+  .unitPanel.is-active .unitImageWrap {
+    opacity: 1;
+    clip-path: inset(0 round 0);
+  }
+
   .unitCopy,
   .unitVisual {
     backdrop-filter: none;
@@ -1024,10 +1121,43 @@ h3 {
 
   .unitCopy {
     box-shadow: 0 18px 48px rgba(71, 50, 8, 0.12);
+    opacity: 0;
+    transform: translate3d(0, 26px, 0) !important;
+    transition: opacity 520ms ease 120ms, transform 650ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms !important;
+  }
+
+  .unitPanel.is-active .unitCopy {
+    opacity: 1;
+    transform: none !important;
   }
 
   .parallaxSparks {
     display: none;
+  }
+
+  .sceneChapter,
+  .unitPanel.reverse .sceneChapter {
+    top: auto;
+    right: auto;
+    bottom: 16px;
+    left: 50%;
+    grid-template-columns: auto auto auto;
+    align-items: center;
+    transform: translateX(-50%);
+  }
+
+  .sceneChapterDots {
+    grid-auto-flow: column;
+    align-items: center;
+  }
+
+  .sceneChapterDots span.current {
+    width: 24px;
+    height: 5px;
+  }
+
+  .sceneChapter small {
+    writing-mode: horizontal-tb;
   }
 }
 
