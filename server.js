@@ -1,7 +1,7 @@
 import express from "express";
 import fs from "node:fs";
 import https from "node:https";
-import { courseBotInstructions, courseContext, fallbackAnswer } from "./lib/courseBot.js";
+import { courseBotInstructions, courseContext, directCourseAnswer, fallbackAnswer } from "./lib/courseBot.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -113,6 +113,11 @@ app.post("/api/chat", async (req, res) => {
 
   if (!userMessage) {
     return res.status(400).json({ error: "Please enter a question." });
+  }
+
+  const directAnswer = directCourseAnswer(userMessage);
+  if (directAnswer) {
+    return res.json({ answer: directAnswer, grounded: true });
   }
 
   if (!process.env.OPENROUTER_API_KEY) {

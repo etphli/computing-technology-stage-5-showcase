@@ -1,5 +1,5 @@
 import https from "node:https";
-import { courseBotInstructions, courseContext, fallbackAnswer } from "../lib/courseBot.js";
+import { courseBotInstructions, courseContext, directCourseAnswer, fallbackAnswer } from "../lib/courseBot.js";
 
 function postOpenRouterChat(payload) {
   const body = JSON.stringify(payload);
@@ -64,6 +64,11 @@ export default async function handler(req, res) {
   const userMessage = String(req.body?.message || "").trim().slice(0, 1200);
   if (!userMessage) {
     return res.status(400).json({ error: "Please enter a question." });
+  }
+
+  const directAnswer = directCourseAnswer(userMessage);
+  if (directAnswer) {
+    return res.json({ answer: directAnswer, grounded: true });
   }
 
   if (!process.env.OPENROUTER_API_KEY) {
