@@ -110,6 +110,9 @@ function postOpenRouterChat(payload) {
     );
 
     request.on("error", reject);
+    request.setTimeout(8000, () => {
+      request.destroy(new Error("OpenRouter request timed out."));
+    });
     request.write(body);
     request.end();
   });
@@ -150,10 +153,18 @@ app.post("/api/chat", async (req, res) => {
   }
 
   try {
-    const response = await postOpenRouterChat({
-        model: process.env.OPENROUTER_MODEL || "google/gemma-4-31b-it:free",
+    const models = [
+      process.env.OPENROUTER_MODEL || "liquid/lfm-2.5-1.2b-instruct:free",
+      process.env.OPENROUTER_FALLBACK_MODEL || "openrouter/free"
+    ].filter((model, index, all) => all.indexOf(model) === index);
+    let lastError;
+
+    for (const model of models) {
+      try {
+        const response = await postOpenRouterChat({
+        model,
         temperature: 0.6,
-        max_tokens: 420,
+        max_tokens: 320,
         messages: [
           {
             role: "system",
@@ -165,25 +176,30 @@ app.post("/api/chat", async (req, res) => {
             content: `Course context:\n${courseContext}\n\nStudent question: ${userMessage}`
           }
         ]
-    });
+        });
 
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error ${response.status}: ${response.text}`);
+        if (!response.ok) {
+          throw new Error(`OpenRouter API error ${response.status}: ${response.text}`);
+        }
+
+        const data = JSON.parse(response.text);
+        const answer = data?.choices?.[0]?.message?.content?.trim();
+        if (!answer) {
+          throw new Error("OpenRouter returned an empty response.");
+        }
+
+        return res.json({ answer, model: data.model || model });
+      } catch (error) {
+        lastError = error;
+      }
     }
 
-    const data = JSON.parse(response.text);
-    const answer = data?.choices?.[0]?.message?.content?.trim();
-
-    if (!answer) {
-      throw new Error("OpenRouter returned an empty response.");
-    }
-
-    res.json({ answer });
+    throw lastError || new Error("No OpenRouter model was available.");
   } catch (error) {
     console.error(error);
-    res.status(502).json({
+    res.json({
       answer: fallbackAnswer(userMessage),
-      error: "The live course bot is unavailable, so a local course answer was used."
+      degraded: true
     });
   }
 });
@@ -197,6 +213,7 @@ app.get("*", (_req, res) => {
 app.listen(port, () => {
   console.log(`Computing Technology Stage 5 site running on http://localhost:${port}`);
   console.log(`OpenRouter API key loaded: ${process.env.OPENROUTER_API_KEY ? "yes" : "no"}`);
-  console.log(`OpenRouter model: ${process.env.OPENROUTER_MODEL || "google/gemma-4-31b-it:free"}`);
+  console.log(`OpenRouter model: ${process.env.OPENROUTER_MODEL || "liquid/lfm-2.5-1.2b-instruct:free"}`);
+  console.log(`OpenRouter fallback: ${process.env.OPENROUTER_FALLBACK_MODEL || "openrouter/free"}`);
   console.log(`OpenRouter self-signed certificate workaround: ${allowSelfSignedCert ? "on" : "off"}`);
 });

@@ -141,7 +141,7 @@ async function requestCourseBot(message) {
       });
 
       const data = await response.json();
-      if (!response.ok || data.error) {
+      if (!data.answer) {
         throw new Error(data.error || `Course bot request failed with ${response.status}`);
       }
 

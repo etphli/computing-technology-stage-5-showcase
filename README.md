@@ -16,7 +16,7 @@ npm run build
 OPENROUTER_API_KEY=your_key npm start
 ```
 
-The OpenRouter API key stays server-side in `server.js`. The default model is the free `google/gemma-4-31b-it:free` variant. If no key is configured, the bot uses a local course-information fallback so the showcase still works during demos.
+The OpenRouter API key stays server-side in `server.js`. The default model is the fast free `liquid/lfm-2.5-1.2b-instruct:free` variant, with `openrouter/free` as an automatic provider fallback. If no key is configured, the bot uses a local course-information fallback so the showcase still works during demos.
 
 ## Deploying the Chatbot
 
@@ -26,7 +26,8 @@ For Vercel, set these environment variables in the project settings:
 
 ```bash
 OPENROUTER_API_KEY=your_key
-OPENROUTER_MODEL=google/gemma-4-31b-it:free
+OPENROUTER_MODEL=liquid/lfm-2.5-1.2b-instruct:free
+OPENROUTER_FALLBACK_MODEL=openrouter/free
 SITE_URL=https://your-site.example
 ```
 
